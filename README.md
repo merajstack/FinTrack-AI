@@ -2,7 +2,7 @@
 
 <div align="center">
 
-# 💰🤖 FinTrack AI
+# 💰🤖 FinTrack AI 
 
 ### **Your Intelligent Multi-Modal Financial Analysis Platform**
 
@@ -12,7 +12,7 @@
 ![Build](https://img.shields.io/badge/Build-Stable-brightgreen?style=for-the-badge)
 
 ### 🎉 **Version 1.0 Successfully Completed & Pushed to GitHub**
-
+<b>Visit : fintrackai.42web.io</b>
 *Track. Analyze. Grow. 📈*
 
 ---
