@@ -35,8 +35,6 @@ export default function SignupPage() {
   const [otpError, setOtpError] = useState("");
   const [resendTimer, setResendTimer] = useState(0);
   const [emailVerified, setEmailVerified] = useState(false);
-  const [storedOtp, setStoredOtp] = useState<string | null>(null);
-  const [storedExpiresAt, setStoredExpiresAt] = useState<number | null>(null);
   const isEmailValid = useMemo(() => isValidEmail(form.email || ""), [form.email]);
 
   useEffect(() => {
@@ -142,12 +140,6 @@ export default function SignupPage() {
       setOtpSent(true);
       setEmailVerified(false);
       setOtp("");
-      if (result.otp) {
-        setStoredOtp(result.otp);
-      }
-      if (result.expiresAt) {
-        setStoredExpiresAt(result.expiresAt);
-      }
       setResendTimer(60);
       setOtpMessage("OTP sent to your email.");
     } else {
@@ -164,30 +156,15 @@ export default function SignupPage() {
     }
 
     setVerifyLoading(true);
-    
-    if (!storedOtp || !storedExpiresAt) {
-      setOtpError("Invalid OTP");
-      setVerifyLoading(false);
-      return;
-    }
-
-    const expiresAtMs = storedExpiresAt < 1000000000000 ? storedExpiresAt * 1000 : storedExpiresAt;
-
-    if (Date.now() >= expiresAtMs) {
-      setOtpError("OTP expired, please request a new one");
-      setVerifyLoading(false);
-      return;
-    }
-
-    if (otp.trim() !== storedOtp.trim()) {
-      setOtpError("Invalid OTP");
-      setVerifyLoading(false);
-      return;
-    }
-
+    const result = await verifyEmailOtp(form.email, otp);
     setVerifyLoading(false);
-    setEmailVerified(true);
-    setOtpMessage("Email verified successfully.");
+
+    if (result.ok) {
+      setEmailVerified(true);
+      setOtpMessage("Email verified successfully.");
+    } else {
+      setOtpError(result.message || "Invalid OTP");
+    }
   };
 
   return (
@@ -239,8 +216,6 @@ export default function SignupPage() {
                     setOtpSent(false);
                     setEmailVerified(false);
                     setOtp("");
-                    setStoredOtp(null);
-                    setStoredExpiresAt(null);
                   }}
                   required
                   disabled={otpLoading || verifyLoading}

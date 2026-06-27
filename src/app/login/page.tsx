@@ -22,8 +22,6 @@ export default function LoginPage() {
   const [otpError, setOtpError] = useState("");
   const [resendTimer, setResendTimer] = useState(0);
   const [emailVerified, setEmailVerified] = useState(false);
-  const [storedOtp, setStoredOtp] = useState<string | null>(null);
-  const [storedExpiresAt, setStoredExpiresAt] = useState<number | null>(null);
   const isEmailValid = useMemo(() => isValidEmail(email), [email]);
 
   useEffect(() => {
@@ -106,12 +104,6 @@ export default function LoginPage() {
       setOtpSent(true);
       setEmailVerified(false);
       setOtp("");
-      if (result.otp) {
-        setStoredOtp(result.otp);
-      }
-      if (result.expiresAt) {
-        setStoredExpiresAt(result.expiresAt);
-      }
       setResendTimer(60);
       setOtpMessage("OTP sent to your email.");
     } else {
@@ -128,32 +120,17 @@ export default function LoginPage() {
     }
 
     setVerifyLoading(true);
-    
-    if (!storedOtp || !storedExpiresAt) {
-      setOtpError("Invalid OTP");
-      setVerifyLoading(false);
-      return;
-    }
-
-    const expiresAtMs = storedExpiresAt < 1000000000000 ? storedExpiresAt * 1000 : storedExpiresAt;
-
-    if (Date.now() >= expiresAtMs) {
-      setOtpError("OTP expired, please request a new one");
-      setVerifyLoading(false);
-      return;
-    }
-
-    if (otp.trim() !== storedOtp.trim()) {
-      setOtpError("Invalid OTP");
-      setVerifyLoading(false);
-      return;
-    }
-
+    const result = await verifyEmailOtp(email, otp);
     setVerifyLoading(false);
-    setEmailVerified(true);
-    setOtpMessage("Email verified successfully.");
-    if (user) {
-      await saveUser({ ...user, email: email.trim().toLowerCase(), emailVerified: true });
+
+    if (result.ok) {
+      setEmailVerified(true);
+      setOtpMessage("Email verified successfully.");
+      if (user) {
+        await saveUser({ ...user, email: email.trim().toLowerCase(), emailVerified: true });
+      }
+    } else {
+      setOtpError(result.message || "Invalid OTP");
     }
   };
 
