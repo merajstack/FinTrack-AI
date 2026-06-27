@@ -7,10 +7,17 @@ export async function POST(req: NextRequest) {
     // Check if this is OTP verification or OTP send
     const isVerification = !!body.otp;
 
-    // Read webhook URLs from server-side environment variables
-    const webhookUrl = isVerification
-      ? process.env.VERIFY_OTP_WEBHOOK_URL
-      : process.env.OTP_WEBHOOK_URL;
+    const fallbackSendUrl =
+      process.env.OTP_WEBHOOK_URL || process.env.NEXT_PUBLIC_OTP_WEBHOOK_URL;
+    const fallbackVerifyUrl =
+      process.env.VERIFY_OTP_WEBHOOK_URL ||
+      process.env.NEXT_PUBLIC_VERIFY_OTP_WEBHOOK_URL ||
+      fallbackSendUrl;
+
+    const webhookUrl = (isVerification ? fallbackVerifyUrl : fallbackSendUrl)
+      ?.toString()
+      .trim()
+      .replace(/^['"]|['"]$/g, "");
 
     if (!webhookUrl) {
       return NextResponse.json(
