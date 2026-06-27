@@ -180,8 +180,6 @@ export default function LoginPage() {
                   setOtpSent(false);
                   setEmailVerified(false);
                   setOtp("");
-                  setStoredOtp(null);
-                  setStoredExpiresAt(null);
                 }}
                 required
                 disabled={otpLoading || verifyLoading || authenticating}
