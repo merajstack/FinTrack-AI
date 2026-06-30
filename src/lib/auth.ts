@@ -107,7 +107,8 @@ export async function verifyEmailOtp(
       response.ok &&
       data &&
       (data.success === true ||
-        data.verified === true);
+        data.verified === true ||
+        data.status === "success");
 
     return {
       ok: success,

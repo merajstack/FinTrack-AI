@@ -172,7 +172,10 @@ export async function POST(req: NextRequest) {
     }
 
     if (isVerification) {
-      const verified = data?.success === true || data?.verified === true;
+      const verified =
+        data?.success === true ||
+        data?.verified === true ||
+        data?.status === "success";
       if (!verified) {
         return errorResponse(data?.message || "Invalid or expired OTP", 400);
       }

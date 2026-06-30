@@ -1,4 +1,4 @@
-import { openDB, IDBPDatabase } from 'idb';
+import { openDB, type DBSchema, type IDBPDatabase } from 'idb';
 
 export type AIProvider = 'gemini' | 'nvidia' | 'groq';
 
@@ -45,9 +45,24 @@ export interface MonthlyInsight {
 const DB_NAME = 'fintrack_db';
 const DB_VERSION = 1;
 
-let _db: IDBPDatabase<any> | null = null;
+interface FintrackDB extends DBSchema {
+  user: {
+    key: string;
+    value: UserProfile;
+  };
+  transactions: {
+    key: string;
+    value: Transaction;
+  };
+  insights: {
+    key: string;
+    value: MonthlyInsight;
+  };
+}
 
-async function getDB(): Promise<IDBPDatabase<any>> {
+let _db: IDBPDatabase<FintrackDB> | null = null;
+
+async function getDB(): Promise<IDBPDatabase<FintrackDB>> {
   if (_db) return _db;
   _db = await openDB(DB_NAME, DB_VERSION, {
     upgrade(db) {
@@ -72,9 +87,13 @@ export async function saveUser(profile: UserProfile): Promise<void> {
 }
 
 export async function getUser(): Promise<UserProfile | null> {
-  const db = await getDB();
-  const all = await db.getAll('user');
-  return all[0] ?? null;
+  try {
+    const db = await getDB();
+    const all = await db.getAll('user');
+    return all[0] ?? null;
+  } catch {
+    return null;
+  }
 }
 
 // ── TRANSACTIONS ──

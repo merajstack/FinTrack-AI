@@ -185,6 +185,28 @@ html, body {
   letter-spacing: 0.05em;
 }
 
+.modeling-layout {
+  display: grid;
+  grid-template-columns: minmax(280px, 340px) minmax(0, 1fr);
+  gap: 22px;
+}
+
+@media (max-width: 900px) {
+  .modeling-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .nav {
+    overflow-x: auto;
+    gap: 18px;
+  }
+
+  .nav-links {
+    gap: 16px;
+    flex-shrink: 0;
+  }
+}
+
 /* Scrollbar */
 ::-webkit-scrollbar { width: 8px; }
 ::-webkit-scrollbar-track { background: var(--bg); }

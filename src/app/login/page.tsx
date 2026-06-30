@@ -27,7 +27,8 @@ export default function LoginPage() {
   useEffect(() => {
     getUser().then(async (u) => {
       if (!u) {
-        router.replace("/signup");
+        setChecking(false);
+        return;
       } else if (localStorage.getItem("fintrack_session") === "logged_in") {
         router.replace("/dashboard");
       } else {
