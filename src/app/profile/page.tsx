@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import Nav from "@/components/Nav";
 import { getUser, saveUser, clearAllData } from "@/lib/db";
 import type { UserProfile, AIProvider } from "@/lib/db";
+import { useDbSync } from "@/lib/useDbSync";
 
 const FIELDS = [
   { name: "name", label: "Name", type: "text" },
@@ -15,6 +16,7 @@ const FIELDS = [
 
 export default function ProfilePage() {
   const router = useRouter();
+  const { revision } = useDbSync();
   const [user, setUser] = useState<UserProfile | null>(null);
   const [form, setForm] = useState<Record<string, string>>({});
   const [saved, setSaved] = useState(false);
@@ -25,7 +27,10 @@ export default function ProfilePage() {
   const [bioSetupSuccess, setBioSetupSuccess] = useState<string | null>(null);
 
   useEffect(() => {
+    let active = true;
+
     getUser().then((u) => {
+      if (!active) return;
       if (!u) { router.replace("/signup"); return; }
       setUser(u);
       setForm({
@@ -58,7 +63,10 @@ export default function ProfilePage() {
       });
       setLoading(false);
     });
-  }, [router]);
+    return () => {
+      active = false;
+    };
+  }, [router, revision]);
 
   const onChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -316,10 +324,10 @@ export default function ProfilePage() {
         <div className="card" style={{ padding: 24, marginTop: 24, borderColor: "var(--danger)", boxShadow: "4px 4px 0 var(--danger)" }}>
           <p className="label" style={{ color: "var(--danger)" }}>Danger Zone</p>
           <p style={{ fontSize: 14, color: "var(--muted)", marginTop: 8, marginBottom: 16 }}>
-            Permanently delete all your data, including your profile, all transactions, and insights.
+            Permanently delete your entire profile, all transactions, insights, chat history, and app-owned local storage.
           </p>
           <button className="btn btn-outline" style={{ borderColor: "var(--danger)", color: "var(--danger)" }} onClick={() => setShowConfirmModal(true)}>
-            Delete All Data
+            Delete Entire Profile
           </button>
         </div>
       </main>
@@ -349,10 +357,10 @@ export default function ProfilePage() {
           }}>
             <p style={{ fontSize: 36 }}>⚠️</p>
             <h2 style={{ fontSize: 20, fontWeight: 700, marginTop: 12, color: "var(--danger)" }}>
-              Delete All Data?
+              Delete Entire Profile?
             </h2>
             <p style={{ fontSize: 14, color: "var(--muted)", marginTop: 8, lineHeight: 1.5 }}>
-              This will permanently delete all your transaction history, monthly insights, and user profile details. This action cannot be undone.
+              This will permanently erase your profile, transaction history, monthly insights, chat history, and app-owned local storage. This action cannot be undone.
             </p>
             <div style={{ display: "flex", gap: 12, marginTop: 24, justifyContent: "center" }}>
               <button

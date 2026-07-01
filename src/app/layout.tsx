@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Space_Grotesk, Space_Mono } from "next/font/google";
 import "./globals.css";
+import NavigationOverlay from "@/components/navigation-overlay";
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
@@ -25,7 +26,10 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className={`${spaceGrotesk.variable} ${spaceMono.variable}`}>
-      <body>{children}</body>
+      <body>
+        <NavigationOverlay />
+        {children}
+      </body>
     </html>
   );
 }

@@ -471,7 +471,8 @@ export interface ChatMessage {
 
 const CHAT_SYSTEM = `You are FinTrack AI, a friendly and knowledgeable personal finance advisor.
 You help users understand their spending patterns, savings goals, and financial health.
-Keep answers concise, practical, and motivating. Use ₹ for currency when amounts are mentioned.
+Keep answers complete, practical, and motivating. Use ₹ for currency when amounts are mentioned.
+Prefer concise answers, but do not truncate useful details. If needed, give the full answer so the user gets a complete response.
 If the user shares financial data, analyse it and give specific actionable advice.
 Do NOT make up transaction data — only reference what the user tells you.`;
 
@@ -480,9 +481,15 @@ export async function chatWithAI(
   apiKey: string,
   provider: AIProvider = 'gemini',
   baseUrl?: string,
-  model?: string
+  model?: string,
+  options?: { responseMode?: 'table-first' | 'plain' }
 ): Promise<string> {
   const cfg = getProviderConfig(provider, apiKey, baseUrl, model);
+  const responseMode = options?.responseMode ?? 'plain';
+  const responseGuidance = responseMode === 'table-first'
+    ? 'For the first user question in the conversation, you MUST answer with a markdown table first. Do not start with any paragraph or bullet list. Use this exact structure: | Topic | Status | Recommendation | Impact |. Keep 4-6 rows, then optionally add 1 short line below the table if needed. For follow-up questions, switch to plain text and stay medium-short.'
+    : 'Answer in medium-short plain text. Keep responses complete, but do not ramble. Use a table only if it clearly improves clarity.';
+  const chatSystem = `${CHAT_SYSTEM}\n${responseGuidance}`;
 
   if (cfg.provider === 'nvidia' || cfg.provider === 'groq') {
     const reply = await callOpenAIProxy(
@@ -490,7 +497,7 @@ export async function chatWithAI(
       cfg.key,
       cfg.model,
       [
-        { role: 'system',    content: CHAT_SYSTEM },
+        { role: 'system',    content: chatSystem },
         { role: 'assistant', content: "Understood! I'm FinTrack AI, your personal finance advisor. How can I help you today?" },
         ...messages.map((m) => ({
           role:    m.role === 'model' ? 'assistant' : 'user',
@@ -498,14 +505,14 @@ export async function chatWithAI(
         })),
       ],
       0.7,
-      1024
+      2048
     );
     return reply || 'Sorry, I could not generate a response.';
   }
 
   // ── Gemini ────────────────────────────────────────────────────────────────
   const contents = [
-    { role: 'user',  parts: [{ text: CHAT_SYSTEM }] },
+    { role: 'user',  parts: [{ text: chatSystem }] },
     { role: 'model', parts: [{ text: "Understood! I'm FinTrack AI, your personal finance advisor. How can I help you today?" }] },
     ...messages.map((m) => ({
       role:  m.role,
@@ -518,7 +525,7 @@ export async function chatWithAI(
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       contents,
-      generationConfig: { temperature: 0.7, topK: 40, topP: 0.95, maxOutputTokens: 1024 },
+      generationConfig: { temperature: 0.7, topK: 40, topP: 0.95, maxOutputTokens: 2048 },
     }),
   });
 

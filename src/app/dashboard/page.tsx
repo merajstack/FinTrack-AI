@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import Nav from "@/components/Nav";
 import { getUser, getAllTransactions, getAllInsights } from "@/lib/db";
 import type { UserProfile, Transaction, MonthlyInsight } from "@/lib/db";
+import { useDbSync } from "@/lib/useDbSync";
 
 function fmt(n: number) {
   return "₹" + Math.abs(n).toLocaleString("en-IN", { maximumFractionDigits: 0 });
@@ -42,24 +43,33 @@ function StatCard({ label, value, sub, accent }: { label: string; value: string;
 
 export default function DashboardPage() {
   const router = useRouter();
+  const { revision } = useDbSync();
   const [user, setUser] = useState<UserProfile | null>(null);
   const [txs, setTxs] = useState<Transaction[]>([]);
   const [insights, setInsights] = useState<MonthlyInsight[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let active = true;
+
     async function load() {
       const u = await getUser();
+      if (!active) return;
       if (!u) { router.replace("/signup"); return; }
       const t = await getAllTransactions();
       const i = await getAllInsights();
+      if (!active) return;
       setUser(u);
       setTxs(t);
       setInsights(i.sort((a, b) => b.id.localeCompare(a.id)));
       setLoading(false);
     }
+
     load();
-  }, [router]);
+    return () => {
+      active = false;
+    };
+  }, [router, revision]);
 
   if (loading) {
     return (

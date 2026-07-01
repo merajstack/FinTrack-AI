@@ -2,10 +2,11 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { getUser } from "@/lib/db";
+import { getUser, subscribeToDbChanges } from "@/lib/db";
 
 const links = [
   { href: "/dashboard",    label: "Dashboard" },
+  { href: "/dashboard/runway", label: "Runway" },
   { href: "/upload",       label: "Upload" },
   { href: "/transactions", label: "Transactions" },
   { href: "/modeling",     label: "What-If" },
@@ -26,6 +27,41 @@ export default function Nav() {
         router.replace("/login");
       }
     });
+  }, [router]);
+
+  useEffect(() => {
+    const handleSessionStorage = (event: StorageEvent) => {
+      if (event.key !== "fintrack_session") return;
+
+      if (event.newValue === "logged_out") {
+        router.replace("/login");
+      } else {
+        getUser().then((u) => {
+          if (!u) {
+            router.replace("/signup");
+          } else if (event.newValue === "logged_in") {
+            router.replace("/dashboard");
+          }
+        });
+      }
+    };
+
+    const unsubscribeDb = subscribeToDbChanges(() => {
+      getUser().then((u) => {
+        if (!u) {
+          router.replace("/signup");
+        } else if (localStorage.getItem("fintrack_session") === "logged_out") {
+          router.replace("/login");
+        }
+      });
+    });
+
+    window.addEventListener("storage", handleSessionStorage);
+
+    return () => {
+      window.removeEventListener("storage", handleSessionStorage);
+      unsubscribeDb();
+    };
   }, [router]);
 
   const handleLogout = () => {

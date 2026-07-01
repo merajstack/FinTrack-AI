@@ -74,7 +74,7 @@ export default function LoginPage() {
         localStorage.setItem("fintrack_session", "logged_in");
         router.push("/dashboard");
       } else {
-        setError("Incorrect password. Try again.");
+        setError("Incorrect password.");
         setAuthenticating(false);
       }
     } else {
@@ -83,7 +83,7 @@ export default function LoginPage() {
         localStorage.setItem("fintrack_session", "logged_in");
         router.push("/dashboard");
       } else {
-        setError("Incorrect name/password. Try again.");
+        setError("Incorrect password.");
         setAuthenticating(false);
       }
     }

@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import Nav from "@/components/Nav";
 import { getUser, getAllTransactions, clearTransactions } from "@/lib/db";
 import type { Transaction } from "@/lib/db";
+import { useDbSync } from "@/lib/useDbSync";
 
 const CATEGORIES = [
   "All", "Food", "Transport", "Shopping", "Entertainment", "Utilities",
@@ -16,20 +17,27 @@ function fmt(n: number) {
 
 export default function TransactionsPage() {
   const router = useRouter();
+  const { revision } = useDbSync();
   const [txs, setTxs] = useState<Transaction[]>([]);
   const [filter, setFilter] = useState("All");
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let active = true;
+
     getUser().then((u) => {
       if (!u) router.replace("/signup");
     });
     getAllTransactions().then((data) => {
+      if (!active) return;
       setTxs(data.sort((a, b) => b.date.localeCompare(a.date)));
       setLoading(false);
     });
-  }, [router]);
+    return () => {
+      active = false;
+    };
+  }, [router, revision]);
 
   const filtered = txs.filter((t) => {
     const matchCat = filter === "All" || t.category === filter;
