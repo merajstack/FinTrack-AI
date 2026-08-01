@@ -4,7 +4,7 @@
 
 # FinTrack AI 
 
-### **Your Intelligent Multi-Modal Financial Analysis Platform**
+### **Your Intelligent Multi-Modal Financial Analysis Platform **
 
 ![Status](https://img.shields.io/badge/Status-Completed-success?style=for-the-badge)
 ![Version](https://img.shields.io/badge/Version-v1.0-blue?style=for-the-badge)
